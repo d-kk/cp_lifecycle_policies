@@ -1,0 +1,37 @@
+#!/usr/bin/python
+
+#
+#
+#
+
+import boto3
+import argparse
+import logging
+
+logger = logging.getLogger()
+logging.basicConfig()
+logger.setLevel(logging.INFO)
+
+s3 = boto3.resource('s3')
+client = boto3.client('s3')
+
+lifecycle_configuration_dict = {}
+
+parser = argparse.ArgumentParser(description='Iterates through S3 buckets and tags objects which are both large and old for bucket lifecycle managment move to Glacier')
+parser.add_argument('--inbucket', required=True, help='''Bucket to process. Default: Process all buckets''')
+parser.add_argument('--outbucket', required=True,help='''Bucket to process. Default: Process all buckets''')
+args = parser.parse_args()
+
+# Guarantee dryrun for development, comment out for real runs
+#args.dryrun = 1
+
+in_lifecycle_configuration = s3.BucketLifecycleConfiguration(args.inbucket)
+#logger.info('Bucket {} rules:\n{}'.format(args.inbucket, in_lifecycle_configuration.rules))
+
+lifecycle_configuration_dict['Rules'] = in_lifecycle_configuration.rules
+#logger.info('Bucket {} config:\n{}'.format(args.inbucket, lifecycle_configuration_dict))
+
+
+out_lifecycle_configuration = s3.BucketLifecycleConfiguration(args.outbucket)
+out_lifecycle_configuration.put(LifecycleConfiguration=lifecycle_configuration_dict)
+
